@@ -36,22 +36,28 @@ import java.util.List;
  * dislikes 中每一组都 不同
  *
  */
-class Solution9 {
 
+
+class Solution9 {
     public boolean possibleBipartition(int n, int[][] dislikes) {
-        int[] fa = new int[n + 1];
-        Arrays.fill(fa, -1);
-        List<Integer>[] g = new List[n + 1];
-        for (int i = 0; i < n; ++i) {
-            g[i] = new ArrayList<Integer>();
+        List<Integer>[] graph = new List[n + 1];
+        for (int i = 0; i <= n; i++) {
+            graph[i] = new ArrayList<>();
         }
-        for (int[] p : dislikes)
-            g[p[0]].add(p[1]);
-            g[p[1]].add(p[0]);
-        for (int i = 1; i <= n; ++i) {
-            for (int j = 0; j < g[i].size(); ++j) {
-                unit(g[i].get(0), g[i].get(j), fa);
-                if (isconnect(i, g[i].get(j), fa)) {
+
+        // Build the graph
+        for (int[] pair : dislikes) {
+            graph[pair[0]].add(pair[1]);
+            graph[pair[1]].add(pair[0]);
+        }
+
+        // -1 means uncolored, 0 and 1 are the two colors
+        int[] colors = new int[n + 1];
+        Arrays.fill(colors, -1);
+
+        for (int i = 1; i <= n; i++) {
+            if (colors[i] == -1) { // Not visited
+                if (!dfs(i, 0, colors, graph)) {
                     return false;
                 }
             }
@@ -59,28 +65,17 @@ class Solution9 {
         return true;
     }
 
-    public void unit(int x, int y, int[] fa) {
-        x = findFa(x, fa);
-        y = findFa(y, fa);
-        if (x == y) {
-            return ;
+    private boolean dfs(int node, int color, int[] colors, List<Integer>[] graph) {
+        colors[node] = color;
+        for (int neighbor : graph[node]) {
+            if (colors[neighbor] == -1) { // Not colored yet
+                if (!dfs(neighbor, 1 - color, colors, graph)) {
+                    return false;
+                }
+            } else if (colors[neighbor] == color) { // Same color as current node
+                return false;
+            }
         }
-        if (fa[x] <= fa[y]) {
-            int temp = x;
-            x = y;
-            y = temp;
-        }
-        fa[x] += fa[y];
-        fa[y] = x;
-    }
-
-    public boolean isconnect(int x, int y, int[] fa) {
-        x = findFa(x, fa);
-        y = findFa(y, fa);
-        return x == y;
-    }
-
-    public int findFa(int x, int[] fa) {
-        return fa[x] > 0 ? x : (fa[x] = findFa(fa[x], fa));
+        return true;
     }
 }
